@@ -1,0 +1,113 @@
+services:
+  api-gateway:
+    build: ./gateway
+    container_name: api-gateway
+    depends_on:
+      - redis
+      - echo-server
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: "redis:latest"
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  echo-server:
+    build: ./echo_server
+    container_name: echo-server
+    ports:
+      - "6969:6969"
+    networks:
+      - app-network
+
+  # consul:
+  #   image: "consul:1.14.5"
+  #   container_name: "consul"
+  #   ports:
+  #     - "8500:8500"
+  #     - "8600:8600/udp"
+  #   command: "agent -dev -client=0.0.0.0"
+  #   networks:
+  #     - app-network
+
+  # service-discovery:
+  #   build: ./discovery
+  #   container_name: service-discovery
+  #   depends_on:
+  #     - consul
+  #   environment:
+  #     - CONSUL_HTTP_ADDR=consul:8500
+  #   ports:
+  #     - "8081:8081"
+  #   networks:
+  #     - app-network
+
+  # ingestion:
+  #   build: ./ingestion
+  #   depends_on:
+  #     - consul
+  #     - service-discovery
+  #     - mongodb
+  #   ports:
+  #     - "8001"
+  #   networks:
+  #     - app-network
+  #   deploy:
+  #     replicas: 3
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - app-network
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - app-network
+
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: mongodb-container
+  #   ports:
+  #     - "27017:27017"
+  #   command: ["--noauth"]
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   networks:
+  #     - app-network
+
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitmq
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: user
+  #     RABBITMQ_DEFAULT_PASS: pass
+  #   networks:
+  #     - app-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
