@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s # Default scrape interval
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['api-gateway:8080']
+
+  # - job_name: 'echo-server'
+  #   scrape_interval: 5s
+  #   consul_sd_configs:
+  #     - server: 'echo-server:6969'
+  #       services:
+  #         - 'echo-server'
+      

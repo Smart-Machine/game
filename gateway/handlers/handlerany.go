@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"api-gateway/middleware"
+	"api-gateway/redisclient"
 	"api-gateway/utils"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -32,11 +33,13 @@ func proxyRequest(r *http.Request, url string) (*http.Response, error) {
 	return httpClient.Do(newreq)
 }
 
-func proxyResponse(w http.ResponseWriter, resp *http.Response) error {
+func proxyResponse(w http.ResponseWriter, resp *http.Response, cacheKey string) error {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
+
+	redisclient.DoCacheResponse(cacheKey, string(body), redisclient.TTL)
 
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
@@ -44,10 +47,9 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response) error {
 	return nil
 }
 
-func HandleRequest(w http.ResponseWriter, r *http.Request) {
+func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// serviceName := getServiceName(r.URL.Path)
-
-	log.Println("Handling: ", r.URL.Path)
+	cacheKey := redisclient.CreateCacheKey(r)
 
 	resp, err := proxyRequest(r, "http://echo-server:6969/")
 	if err != nil {
@@ -58,10 +60,12 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	err = proxyResponse(w, resp)
+	err = proxyResponse(w, resp, cacheKey)
 	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, utils.JSON{
 			"error": err,
 		})
 	}
 }
+
+var HandleRequest http.Handler = middleware.ChainMiddleware(http.HandlerFunc(handleRequest), middleware.CountRequestLoad, middleware.CachingMiddleware, middleware.LoggingMiddleware)
