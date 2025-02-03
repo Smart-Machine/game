@@ -6,15 +6,16 @@ import (
 	"api-gateway/utils"
 	"io"
 	"net/http"
+	"strings"
 )
 
-// func getServiceName(path string) string {
-// 	if strings.HasPrefix(path, "/session/") {
-// 		return "session-service"
-// 	} else {
-// 		return "user-service"
-// 	}
-// }
+func getServiceName(r *http.Request) string {
+	if strings.HasPrefix(r.URL.Path, "/session") {
+		return "http://session-service:8001" + r.URL.Path
+	} else {
+		return "http://user-service:8002" + r.URL.Path
+	}
+}
 
 func proxyRequest(r *http.Request, url string) (*http.Response, error) {
 	// Switching to a bytes.Buffer got rid of the `chunked` transfer encoding
@@ -48,10 +49,10 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response, cacheKey string) 
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	// serviceName := getServiceName(r.URL.Path)
+	serviceName := getServiceName(r)
 	cacheKey := redisclient.CreateCacheKey(r)
 
-	resp, err := proxyRequest(r, "http://echo-server:6969/")
+	resp, err := proxyRequest(r, serviceName)
 	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusNotFound, utils.JSON{
 			"error": err,

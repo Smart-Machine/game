@@ -10,4 +10,4 @@ import (
 var redisClient *redis.Client
 var redisContext = context.Background()
 
-const TTL = 60 * time.Second
+const TTL = 5 * time.Second

@@ -3,6 +3,7 @@ package middleware
 import (
 	"api-gateway/monitor"
 	"api-gateway/redisclient"
+	"api-gateway/utils"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +14,8 @@ type Middleware func(http.Handler) http.Handler
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Request: %s %s\n", r.Method, r.URL.Path)
-		// Call the next handler
+		fmt.Printf("Proxy: %s %s\n", r.Method, r.URL.Path)
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -39,6 +40,16 @@ func CountRequestLoad(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt64(&monitor.RequestCount, 1)
 		monitor.PrometheusRequestCount.WithLabelValues(r.URL.Path, r.Method).Inc()
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func ValidateJWTToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if utils.IsProtectedRoute(r.URL.Path) && !utils.IsValidToken(r) {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, utils.JSON{"error": "The provided token was invalid."})
+		}
 
 		next.ServeHTTP(w, r)
 	})

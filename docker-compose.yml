@@ -4,7 +4,7 @@ services:
     container_name: api-gateway
     depends_on:
       - redis
-      - echo-server
+      # - echo-server
     ports:
       - "8080:8080"
     networks:
@@ -20,11 +20,27 @@ services:
     networks:
       - app-network
 
-  echo-server:
-    build: ./echo_server
-    container_name: echo-server
+  # echo-server:
+  #   build: ./echo_server
+  #   container_name: echo-server
+  #   ports:
+  #     - "6969:6969"
+  #   networks:
+  #     - app-network
+  
+  session-service:
+    build: ./services/session
+    container_name: session-service
     ports:
-      - "6969:6969"
+      - "8001:8001"
+    networks:
+      - app-network
+  
+  user-service:
+    build: ./services/user
+    container_name: user-service
+    ports:
+      - "8002:8002"
     networks:
       - app-network
 

@@ -12,7 +12,7 @@ import (
 // Creates the cache key
 func CreateCacheKey(r *http.Request) string {
 	// Create a cache key based on the URL path
-	cacheKey := fmt.Sprintf("cache:%s", r.URL.Path)
+	cacheKey := fmt.Sprintf("cache:%s", r.Method+"-"+r.URL.Path)
 	if r.URL.RawQuery != "" {
 		cacheKey = fmt.Sprintf("cache:%s?%s", r.URL.Path, r.URL.RawQuery)
 	}

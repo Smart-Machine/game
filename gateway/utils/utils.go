@@ -5,7 +5,13 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 )
+
+var ProtectedRoutes = []string{
+	"/session",
+	"/user",
+}
 
 type JSON map[string]interface{}
 
@@ -26,4 +32,19 @@ func WriteJSONResponse(w http.ResponseWriter, statusCode int, response interface
 	if err != nil {
 		http.Error(w, "Invalid given json for the response", http.StatusInternalServerError)
 	}
+}
+
+func IsProtectedRoute(path string) bool {
+	for _, p := range ProtectedRoutes {
+		if strings.HasPrefix(path, p) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func IsValidToken(r *http.Request) bool {
+	// Request /validate from users
+	return true
 }
