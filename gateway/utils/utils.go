@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -62,23 +63,34 @@ func IsProtectedRoute(path string) bool {
 // TODO: Dynamic ports for replicas
 func IsValidToken(r *http.Request) bool {
 	// Request /validate from users
-	url := "http://user-service:8002/validate"
+	url := "http://user-service-1:8004/validate"
+	token_raw := strings.Split(r.Header.Get("Authorization"), " ")
+	token := ""
+	if len(token_raw) > 1 {
+		token = token_raw[1]
+	}
 	postData := JSON{
-		"user_token": r.Header.Get("Authorization"),
+		"user_token": token,
 	}
 	jsonData, err := json.Marshal(postData)
 	if err != nil {
+		log.Println("1")
+		log.Println(err)
 		return false
 	}
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("2")
+		log.Println(err)
 		return false
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Println("3")
+		log.Println(err)
 		return false
 	}
 
@@ -87,10 +99,12 @@ func IsValidToken(r *http.Request) bool {
 	}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
+		log.Println("4")
+		log.Println(err)
 		return false
 	}
 
-	if response.Message == "Token is invalid." {
+	if strings.EqualFold(response.Message, "Token is invalid.") {
 		return false
 	}
 
