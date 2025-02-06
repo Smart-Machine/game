@@ -15,7 +15,6 @@ class User(BaseModel):
     archtype: str = Field(default="")
 
 
-# TODO: add validation here
 class UserRegisterRequest(BaseModel):
     user_id: str
     user_name: str
@@ -27,3 +26,7 @@ class UserRegisterRequest(BaseModel):
 class UserLoginRequest(BaseModel):
     user_name: str
     user_password: str
+
+
+class UserTokenValidation(BaseModel):
+    user_token: str

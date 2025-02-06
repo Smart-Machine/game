@@ -4,14 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
-
-var ProtectedRoutes = []string{
-	"/session",
-	"/user",
-}
 
 type JSON map[string]interface{}
 
@@ -35,16 +31,68 @@ func WriteJSONResponse(w http.ResponseWriter, statusCode int, response interface
 }
 
 func IsProtectedRoute(path string) bool {
-	for _, p := range ProtectedRoutes {
+	var protectedRoute bool
+	var exceptionRoute bool
+
+	for _, p := range []string{
+		"/session",
+		"/user",
+	} {
 		if strings.HasPrefix(path, p) {
-			return true
+			protectedRoute = true
 		}
 	}
 
-	return false
+	for _, e := range []string{
+		"/session/docs",
+		"/user/docs",
+		"/session/openapi.json",
+		"/user/openapi.json",
+		"/session/status",
+		"/user/status",
+	} {
+		if strings.HasPrefix(path, e) {
+			exceptionRoute = true
+		}
+	}
+
+	return protectedRoute && !exceptionRoute
 }
 
+// TODO: Dynamic ports for replicas
 func IsValidToken(r *http.Request) bool {
 	// Request /validate from users
+	url := "http://user-service:8002/validate"
+	postData := JSON{
+		"user_token": r.Header.Get("Authorization"),
+	}
+	jsonData, err := json.Marshal(postData)
+	if err != nil {
+		return false
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false
+	}
+
+	var response struct {
+		Message string `json:"message"`
+	}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return false
+	}
+
+	if response.Message == "Token is invalid." {
+		return false
+	}
+
 	return true
 }

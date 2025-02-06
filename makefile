@@ -7,3 +7,9 @@ clean:
 
 up:
 	docker compose up --build
+
+postgres_shell:
+	docker exec -it `docker ps --filter "name=postgres" -q` psql -h localhost -p 5432 -U postgres -d users_service -W
+
+mongo_shell:
+	docker exec -it `docker ps --filter "name=mongo" -q` mongos

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"api-gateway/loadbalancer"
 	"api-gateway/middleware"
 	"api-gateway/redisclient"
 	"api-gateway/utils"
@@ -11,9 +12,9 @@ import (
 
 func getServiceName(r *http.Request) string {
 	if strings.HasPrefix(r.URL.Path, "/session") {
-		return "http://session-service:8001" + r.URL.Path
+		return loadbalancer.GetNextService(sessionServices) + r.URL.Path
 	} else {
-		return "http://user-service:8002" + r.URL.Path
+		return loadbalancer.GetNextService(userServices) + r.URL.Path
 	}
 }
 
@@ -50,6 +51,7 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response, cacheKey string) 
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	serviceName := getServiceName(r)
+	// log.Println(serviceName)
 	cacheKey := redisclient.CreateCacheKey(r)
 
 	resp, err := proxyRequest(r, serviceName)
@@ -69,4 +71,4 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var HandleRequest http.Handler = middleware.ChainMiddleware(http.HandlerFunc(handleRequest), middleware.CountRequestLoad, middleware.CachingMiddleware, middleware.LoggingMiddleware)
+var HandleRequest http.Handler = middleware.ChainMiddleware(http.HandlerFunc(handleRequest), middleware.CountRequestLoad, middleware.ValidateJWTToken, middleware.CachingMiddleware, middleware.LoggingMiddleware)

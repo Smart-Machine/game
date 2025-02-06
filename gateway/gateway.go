@@ -18,7 +18,7 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.Handle("/version", handlers.HandleVersion)
-	http.Handle("/health", handlers.HandleHealth)
+	http.Handle("/status", handlers.HandleHealth)
 	http.Handle("/", handlers.HandleRequest)
 
 	log.Println("API Gateway running on port 8080")

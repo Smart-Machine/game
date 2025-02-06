@@ -47,8 +47,9 @@ func CountRequestLoad(next http.Handler) http.Handler {
 
 func ValidateJWTToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if utils.IsProtectedRoute(r.URL.Path) && !utils.IsValidToken(r) {
+		if utils.IsProtectedRoute(r.URL.Path) && utils.IsValidToken(r) {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, utils.JSON{"error": "The provided token was invalid."})
+			return
 		}
 
 		next.ServeHTTP(w, r)

@@ -4,7 +4,6 @@ services:
     container_name: api-gateway
     depends_on:
       - redis
-      # - echo-server
     ports:
       - "8080:8080"
     networks:
@@ -20,64 +19,65 @@ services:
     networks:
       - app-network
 
-  # echo-server:
-  #   build: ./echo_server
-  #   container_name: echo-server
-  #   ports:
-  #     - "6969:6969"
-  #   networks:
-  #     - app-network
-  
-  session-service:
+  session-service-1:
     build: ./services/session
-    container_name: session-service
+    container_name: session-service-1
+    environment:
+      - PORT=8001
     ports:
       - "8001:8001"
     networks:
       - app-network
   
-  user-service:
-    build: ./services/user
-    container_name: user-service
+  session-service-2:
+    build: ./services/session
+    container_name: session-service-2
+    environment:
+      - PORT=8002
     ports:
       - "8002:8002"
     networks:
       - app-network
+  
+  session-service-3:
+    build: ./services/session
+    container_name: session-service-3
+    environment:
+      - PORT=8003
+    ports:
+      - "8003:8003"
+    networks:
+      - app-network
+  
+  user-service-1:
+    build: ./services/user
+    container_name: user-service-1
+    environment:
+      - PORT=8004
+    ports:
+      - "8004:8004"
+    networks:
+      - app-network
+    
+  user-service-2:
+    build: ./services/user
+    container_name: user-service-2
+    environment:
+      - PORT=8005
+    ports:
+      - "8005:8005"
+    networks:
+      - app-network
 
-  # consul:
-  #   image: "consul:1.14.5"
-  #   container_name: "consul"
-  #   ports:
-  #     - "8500:8500"
-  #     - "8600:8600/udp"
-  #   command: "agent -dev -client=0.0.0.0"
-  #   networks:
-  #     - app-network
-
-  # service-discovery:
-  #   build: ./discovery
-  #   container_name: service-discovery
-  #   depends_on:
-  #     - consul
-  #   environment:
-  #     - CONSUL_HTTP_ADDR=consul:8500
-  #   ports:
-  #     - "8081:8081"
-  #   networks:
-  #     - app-network
-
-  # ingestion:
-  #   build: ./ingestion
-  #   depends_on:
-  #     - consul
-  #     - service-discovery
-  #     - mongodb
-  #   ports:
-  #     - "8001"
-  #   networks:
-  #     - app-network
-  #   deploy:
-  #     replicas: 3
+  user-service-3:
+    build: ./services/user
+    container_name: user-service-3
+    environment:
+      - PORT=8006
+    ports:
+      - "8006:8006"
+    networks:
+      - app-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -97,31 +97,35 @@ services:
     networks:
       - app-network
 
-  # mongodb:
-  #   image: mongo:latest
-  #   container_name: mongodb-container
-  #   ports:
-  #     - "27017:27017"
-  #   command: ["--noauth"]
-  #   volumes:
-  #     - mongo-data:/data/db
-  #   networks:
-  #     - app-network
-
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   container_name: rabbitmq
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: user
-  #     RABBITMQ_DEFAULT_PASS: pass
-  #   networks:
-  #     - app-network
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    ports:
+      - "27017:27017"
+    command: ["--noauth"]
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+  
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   mongo-data:
+    driver: local
+  postgres-data:
     driver: local
 
 networks:

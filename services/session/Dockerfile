@@ -6,6 +6,6 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-EXPOSE 8001 
+EXPOSE ${PORT} 
 
 CMD [ "python", "main.py" ]
